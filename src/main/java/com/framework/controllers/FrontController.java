@@ -1,23 +1,24 @@
 package com.framework.controllers;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import com.framework.annotations.GET;
+import com.framework.model.Mapping;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+
 public class FrontController extends HttpServlet {
 
-    private boolean controllersScanned = false;
-    private List<String> controllerNames = new ArrayList<>();
+    private Map<String, Mapping> urlMappings = new HashMap<>();
 
     // Variable pour stocker le nom du package des contrôleurs
     private String controllerPackage;
@@ -26,6 +27,8 @@ public class FrontController extends HttpServlet {
     public void init() throws ServletException {
         // Récupérer le nom du package des contrôleurs depuis les paramètres d'initialisation
         controllerPackage = getServletConfig().getInitParameter("controller-package");
+        // Scanner les contrôleurs
+        scanControllers();
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -34,18 +37,21 @@ public class FrontController extends HttpServlet {
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
 
-        // Vérifier si les contrôleurs ont déjà été analysés
-        if (!controllersScanned) {
-            // Si non, scanner les contrôleurs et stocker les noms dans la liste
-            scanControllers();
-            controllersScanned = true;
+        // Récupérer le chemin de l'URL de la requête
+        String requestURL = request.getPathInfo();
+
+        // Rechercher le Mapping associé au chemin URL de la requête
+        Mapping mapping = urlMappings.get(requestURL);
+
+        if (mapping != null) {
+            // Afficher le chemin URL et le Mapping
+            out.println("URL: " + requestURL);
+            out.println("Mapping: " + mapping);
+        } else {
+            // Afficher qu'il n'y a pas de méthode associée à ce chemin
+            out.println("No method associated with URL: " + requestURL);
         }
 
-        // Afficher la liste des noms de contrôleurs
-        out.println("Liste des contrôleurs du package " + controllerPackage + " :");
-        for (String controllerName : controllerNames) {
-            out.println(controllerName + "<br>");
-        }
         out.close();
     }
 
@@ -76,9 +82,13 @@ public class FrontController extends HttpServlet {
                                     // Charger la classe à partir du fichier
                                     String className = file.getName().replace(".class", "");
                                     Class<?> clazz = Class.forName(controllerPackage + "." + className);
-                                    // Vérifier si la classe est annotée avec @AnnotationController
-                                    if (clazz.isAnnotationPresent(AnnotationController.class)) {
-                                        controllerNames.add(className);
+                                    // Parcourir les méthodes de la classe pour détecter les annotations GET
+                                    for (var method : clazz.getDeclaredMethods()) {
+                                        if (method.isAnnotationPresent(GET.class)) {
+                                            GET getAnnotation = method.getAnnotation(GET.class);
+                                            String url = getAnnotation.value();
+                                            urlMappings.put(url, new Mapping(clazz.getName(), method.getName()));
+                                        }
                                     }
                                 }
                             }
