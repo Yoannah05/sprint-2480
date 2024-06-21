@@ -1,4 +1,4 @@
-package com.framework.model;
+package com.framework.controllers;
 
 
 public class Mapping {

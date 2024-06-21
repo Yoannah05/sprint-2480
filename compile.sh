@@ -4,7 +4,7 @@
 class_dir="/home/yoannah/Documents/ITU/Web Dyn/sprint-2480/src/test/java"
 
 # Répertoire de travail contenant les fichiers .java
-working_dir="/home/yoannah/Documents/ITU/Web Dyn/sprint-2480/src/main/java/com/framework/controller"
+working_dir="/home/yoannah/Documents/ITU/Web Dyn/sprint-2480/src/main/java/com/framework/controllers"
 
 # Chemin du classpath contenant les bibliothèques nécessaires
 classpath="/home/yoannah/Documents/ITU/Web Dyn/sprint-2480/lib/*"
@@ -17,6 +17,8 @@ mkdir -p "$output_dir"
 
 # Compilation des classes Java en bytecode
 javac -d "$class_dir" -cp "$classpath" "$working_dir"/*.java
+javac -d "$class_dir" -cp "$classpath" "$working_dir"/*.java
+
 
 # Vérifier si la compilation a réussi
 if [ $? -eq 0 ]; then
